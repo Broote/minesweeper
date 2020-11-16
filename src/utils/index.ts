@@ -98,7 +98,7 @@ const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [number, nu
     return result;
 };
 
-export const recursiveOpenCells = (
+export const openCell = (
     [x, y]: [number, number],
     cells: ICells,
     width: number,
@@ -110,33 +110,43 @@ export const recursiveOpenCells = (
     const currentCell = cells[cellKey];
 
     if (
-        currentCell.position === CellPositionEnum.FLAGGED ||
-        currentCell.position === CellPositionEnum.OPENED
+        currentCell.position === CellPositionEnum.OPENED ||
+        currentCell.position === CellPositionEnum.FLAGGED
     ) {
         return cells;
     }
 
     if (isFirstMove && currentCell.hasMine) {
         const regeneratedCells = generateCells({ width, height, minesNumber });
-        return recursiveOpenCells([x, y], regeneratedCells, width, height, minesNumber, true);
+        return openCell([x, y], regeneratedCells, width, height, minesNumber, true);
     }
 
-    const newCells = {
-        ...cells,
-        [cellKey]: {
-            ...currentCell,
-            position: CellPositionEnum.OPENED,
-        },
-    };
+    return recursiveOpenCells([x, y], cells, width, height);
+};
+
+const recursiveOpenCells = (
+    [x, y]: [number, number],
+    cells: ICells,
+    width: number,
+    height: number
+): ICells => {
+    const cellKey = generateKeyByCoordinates([x, y]);
+    const currentCell = cells[cellKey];
+
+    if (
+        currentCell.position === CellPositionEnum.OPENED ||
+        currentCell.position === CellPositionEnum.FLAGGED
+    ) {
+        return cells;
+    }
+
+    cells[cellKey].position = CellPositionEnum.OPENED;
 
     if (currentCell.value !== 0 || currentCell.hasMine) {
-        return newCells;
+        return cells;
     }
 
     const neighbors = getNeighbors({ x, y, width, height });
 
-    return neighbors.reduce(
-        (acc, [x, y]) => recursiveOpenCells([x, y], acc, width, height, minesNumber, false),
-        newCells
-    );
+    return neighbors.reduce((acc, [x, y]) => recursiveOpenCells([x, y], acc, width, height), cells);
 };

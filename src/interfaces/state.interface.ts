@@ -17,7 +17,7 @@ export interface ICellMeta {
     readonly x: number;
     readonly y: number;
     readonly hasMine: boolean;
-    readonly position: CellPositionEnum;
+    position: CellPositionEnum;
     value: PossibleNumberType;
 }
 

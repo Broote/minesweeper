@@ -6,7 +6,7 @@ import Settings from './Settings';
 
 import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from './constants';
 import { IState, GameStatusEnum, CellPositionEnum, ICells } from './interfaces/state.interface';
-import { generateCells, generateKeyByCoordinates, recursiveOpenCells } from './utils';
+import { generateCells, generateKeyByCoordinates, openCell } from './utils';
 
 const initialState: IState = {
     width: INITIAL_WIDTH,
@@ -119,7 +119,7 @@ const reducer = (state: IState, action: ActionType) => {
 
             const isFirstMove = state.lastClick === null;
 
-            const newCells = recursiveOpenCells(
+            const newCells = openCell(
                 [x, y],
                 state.cells,
                 state.width,
