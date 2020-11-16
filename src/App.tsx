@@ -1,17 +1,17 @@
 import React, { useReducer } from 'react';
 import styled from 'styled-components';
+
 import Board from './Board';
+import Settings from './Settings';
+
+import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from './constants';
 import { IState, GameStatusEnum, CellPositionEnum, ICells } from './interfaces/state.interface';
 import { generateCells, generateKeyByCoordinates, recursiveOpenCells } from './utils';
-
-const INITIAL_WIDTH = 10;
-const INITIAL_HEIGHT = 10;
-const MINES_NUMBER = 5;
 
 const initialState: IState = {
     width: INITIAL_WIDTH,
     height: INITIAL_HEIGHT,
-    minesNumber: MINES_NUMBER,
+    minesNumber: INITIAL_MINES_NUMBER,
     gameStatus: GameStatusEnum.IN_PROGRESS,
     lastClick: null,
     isMoveInProgress: false,
@@ -19,7 +19,7 @@ const initialState: IState = {
     cells: generateCells({
         width: INITIAL_WIDTH,
         height: INITIAL_HEIGHT,
-        minesNumber: MINES_NUMBER,
+        minesNumber: INITIAL_MINES_NUMBER,
     }),
 };
 
@@ -55,6 +55,15 @@ interface IResetAction {
     readonly type: 'RESET';
 }
 
+interface IStartGameAction {
+    readonly type: 'START_GAME';
+    readonly payload: {
+        readonly width: number;
+        readonly height: number;
+        readonly minesNumber: number;
+    };
+}
+
 type ActionType =
     | IClickStartAction
     | IClickFinishAction
@@ -62,7 +71,8 @@ type ActionType =
     | IRightClickAction
     | IPressHeadAction
     | IUnpressHeadAction
-    | IResetAction;
+    | IResetAction
+    | IStartGameAction;
 
 const reducer = (state: IState, action: ActionType) => {
     switch (action.type) {
@@ -107,9 +117,18 @@ const reducer = (state: IState, action: ActionType) => {
                 return { ...state };
             }
 
-            const newCells = recursiveOpenCells([x, y], state.cells, state.width, state.height);
+            const isFirstMove = state.lastClick === null;
 
-            const isLose = currentCell.hasMine;
+            const newCells = recursiveOpenCells(
+                [x, y],
+                state.cells,
+                state.width,
+                state.height,
+                state.minesNumber,
+                isFirstMove
+            );
+
+            const isLose = newCells[cellKey].hasMine;
 
             if (isLose) {
                 return {
@@ -207,6 +226,28 @@ const reducer = (state: IState, action: ActionType) => {
                 },
             };
         }
+        case 'START_GAME': {
+            const {
+                width: newWidth,
+                height: newHeight,
+                minesNumber: newMinesNumber,
+            } = action.payload;
+            return {
+                ...state,
+                width: newWidth,
+                height: newHeight,
+                minesNumber: newMinesNumber,
+                gameStatus: GameStatusEnum.IN_PROGRESS,
+                lastClick: null,
+                isMoveInProgress: false,
+                isHeadPressed: false,
+                cells: generateCells({
+                    width: newWidth,
+                    height: newHeight,
+                    minesNumber: newMinesNumber,
+                }),
+            };
+        }
         case 'RESET': {
             return {
                 ...state,
@@ -236,43 +277,60 @@ const reducer = (state: IState, action: ActionType) => {
 const StyledContainer = styled.div`
     padding: 30px;
     font-family: 'Nunito Sans', sans-serif;
+    display: flex;
 `;
+
+const StyledSettingsContainer = styled.div`
+    margin-top: 4px;
+    margin-right: 32px;
+`;
+
+const StyledBoardContainer = styled.div``;
 
 function App() {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     return (
         <StyledContainer>
-            <Board
-                width={state.width}
-                height={state.height}
-                lastClick={state.lastClick}
-                gameStatus={state.gameStatus}
-                isMoveInProgress={state.isMoveInProgress}
-                isHeadPressed={state.isHeadPressed}
-                cells={state.cells}
-                onReset={() => {
-                    dispatch({ type: 'RESET' });
-                }}
-                onPressHead={() => {
-                    dispatch({ type: 'PRESS_HEAD' });
-                }}
-                onUnpressHead={() => {
-                    dispatch({ type: 'UNPRESS_HEAD' });
-                }}
-                onCellClickStart={([x, y]: [number, number]) => {
-                    dispatch({ type: 'CLICK_START', payload: [x, y] });
-                }}
-                onCellClickFinish={([x, y]: [number, number]) => {
-                    dispatch({ type: 'CLICK_FINISH', payload: [x, y] });
-                }}
-                onCellMouseLeave={([x, y]: [number, number]) => {
-                    dispatch({ type: 'MOUSE_LEAVE', payload: [x, y] });
-                }}
-                onCellRightClick={([x, y]: [number, number]) => {
-                    dispatch({ type: 'RIGHT_CLICK', payload: [x, y] });
-                }}
-            />
+            <StyledSettingsContainer>
+                <Settings
+                    onStart={({ width, height, minesNumber }) => {
+                        dispatch({ type: 'START_GAME', payload: { width, height, minesNumber } });
+                    }}
+                />
+            </StyledSettingsContainer>
+            <StyledBoardContainer>
+                <Board
+                    width={state.width}
+                    height={state.height}
+                    lastClick={state.lastClick}
+                    gameStatus={state.gameStatus}
+                    isMoveInProgress={state.isMoveInProgress}
+                    isHeadPressed={state.isHeadPressed}
+                    cells={state.cells}
+                    onReset={() => {
+                        dispatch({ type: 'RESET' });
+                    }}
+                    onPressHead={() => {
+                        dispatch({ type: 'PRESS_HEAD' });
+                    }}
+                    onUnpressHead={() => {
+                        dispatch({ type: 'UNPRESS_HEAD' });
+                    }}
+                    onCellClickStart={([x, y]: [number, number]) => {
+                        dispatch({ type: 'CLICK_START', payload: [x, y] });
+                    }}
+                    onCellClickFinish={([x, y]: [number, number]) => {
+                        dispatch({ type: 'CLICK_FINISH', payload: [x, y] });
+                    }}
+                    onCellMouseLeave={([x, y]: [number, number]) => {
+                        dispatch({ type: 'MOUSE_LEAVE', payload: [x, y] });
+                    }}
+                    onCellRightClick={([x, y]: [number, number]) => {
+                        dispatch({ type: 'RIGHT_CLICK', payload: [x, y] });
+                    }}
+                />
+            </StyledBoardContainer>
         </StyledContainer>
     );
 }

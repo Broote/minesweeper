@@ -102,7 +102,9 @@ export const recursiveOpenCells = (
     [x, y]: [number, number],
     cells: ICells,
     width: number,
-    height: number
+    height: number,
+    minesNumber: number,
+    isFirstMove: boolean
 ): ICells => {
     const cellKey = generateKeyByCoordinates([x, y]);
     const currentCell = cells[cellKey];
@@ -112,6 +114,11 @@ export const recursiveOpenCells = (
         currentCell.position === CellPositionEnum.OPENED
     ) {
         return cells;
+    }
+
+    if (isFirstMove && currentCell.hasMine) {
+        const regeneratedCells = generateCells({ width, height, minesNumber });
+        return recursiveOpenCells([x, y], regeneratedCells, width, height, minesNumber, true);
     }
 
     const newCells = {
@@ -129,7 +136,7 @@ export const recursiveOpenCells = (
     const neighbors = getNeighbors({ x, y, width, height });
 
     return neighbors.reduce(
-        (acc, [x, y]) => recursiveOpenCells([x, y], acc, width, height),
+        (acc, [x, y]) => recursiveOpenCells([x, y], acc, width, height, minesNumber, false),
         newCells
     );
 };
