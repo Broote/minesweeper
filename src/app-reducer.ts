@@ -93,6 +93,7 @@ export const reducer = (state: IState, action: ActionType) => {
             }
 
             const isFirstMove = state.lastClick === null;
+            const gameStartedAt = isFirstMove ? Date.now() : state.gameStartedAt;
             const isLose = state.board[x][y] === MINE_VALUE;
 
             if (isFirstMove && isLose) {
@@ -129,6 +130,8 @@ export const reducer = (state: IState, action: ActionType) => {
 
                 return {
                     ...state,
+                    gameStatus: GameStatusEnum.IN_PROGRESS,
+                    gameStartedAt,
                     board: boardCopy,
                     isMoveInProgress: false,
                     lastClick: action.payload,
@@ -198,6 +201,8 @@ export const reducer = (state: IState, action: ActionType) => {
 
             return {
                 ...state,
+                gameStatus: GameStatusEnum.IN_PROGRESS,
+                gameStartedAt,
                 isMoveInProgress: false,
                 lastClick: action.payload,
                 cellsPositions: newCellsPositions,
@@ -267,11 +272,12 @@ export const reducer = (state: IState, action: ActionType) => {
             });
 
             return {
+                gameStartedAt: null,
                 width: newWidth,
                 height: newHeight,
                 minesNumber: newMinesNumber,
                 minesLeft: newMinesNumber,
-                gameStatus: GameStatusEnum.IN_PROGRESS,
+                gameStatus: GameStatusEnum.NOT_STARTED,
                 lastClick: null,
                 isMoveInProgress: false,
                 isHeadPressed: false,
@@ -292,7 +298,7 @@ export const reducer = (state: IState, action: ActionType) => {
             return {
                 ...state,
                 minesLeft: state.minesNumber,
-                gameStatus: GameStatusEnum.IN_PROGRESS,
+                gameStatus: GameStatusEnum.NOT_STARTED,
                 lastClick: null,
                 isMoveInProgress: false,
                 isHeadPressed: false,

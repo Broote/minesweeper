@@ -45,6 +45,7 @@ const initialState: IState = {
     reservedMineCoordinates,
     board: initialBoard,
     cellsPositions: initialCellsPositions,
+    gameStartedAt: null,
 };
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
                     isHeadPressed={state.isHeadPressed}
                     cellsPositions={state.cellsPositions}
                     board={state.board}
+                    gameStartedAt={state.gameStartedAt}
                     onReset={() => {
                         dispatch({ type: 'RESET' });
                     }}

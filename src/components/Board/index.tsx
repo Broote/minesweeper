@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Cell from '../Cell';
 import Head from '../Head';
 import MinesCounter from '../MinesCounter';
+import Timer from '../Timer';
 
 import { CellValueType } from '../../interfaces/cell.type';
 import {
@@ -25,6 +26,7 @@ interface IProps {
     readonly isHeadPressed: boolean;
     readonly cellsPositions: CellPositionEnum[][];
     readonly board: BoardType;
+    readonly gameStartedAt: number | null;
     readonly onReset: () => void;
     readonly onPressHead: () => void;
     readonly onUnpressHead: () => void;
@@ -120,6 +122,7 @@ const Board: FunctionComponent<IProps> = ({
     isHeadPressed,
     cellsPositions,
     board,
+    gameStartedAt,
     onReset,
     onPressHead,
     onUnpressHead,
@@ -143,7 +146,7 @@ const Board: FunctionComponent<IProps> = ({
                         isHeadPressed={isHeadPressed}
                     />
                 </StyledHeadContainer>
-                <div />
+                <Timer gameStartedAt={gameStartedAt} gameStatus={gameStatus} />
             </StyledTop>
             <StyledFieldsContainer>
                 <StyledFields width={width} height={height}>

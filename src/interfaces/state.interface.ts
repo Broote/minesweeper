@@ -6,6 +6,7 @@ export enum CellPositionEnum {
 }
 
 export enum GameStatusEnum {
+    NOT_STARTED = 'not-started',
     IN_PROGRESS = 'in-progress',
     WIN = 'won',
     LOSE = 'lost',
@@ -27,4 +28,5 @@ export interface IState {
     readonly reservedMineCoordinates: [number, number];
     readonly board: BoardType;
     readonly cellsPositions: CellPositionEnum[][];
+    readonly gameStartedAt: number | null;
 }

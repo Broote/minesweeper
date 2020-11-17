@@ -139,9 +139,11 @@ const makeCellsListToOpen = (
         return;
     }
 
-    const neighbors = getNeighbors({ x, y, width, height });
+    const notVisitedNeighbors = getNeighbors({ x, y, width, height }).filter(
+        ([x, y]) => !visited[x][y]
+    );
 
-    acc.push(...neighbors);
+    acc.push(...notVisitedNeighbors);
 };
 
 const getNRandomNumbers = (max: number, n: number): number[] =>
