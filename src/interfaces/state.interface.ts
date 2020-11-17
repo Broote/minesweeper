@@ -1,5 +1,3 @@
-import { PossibleNumberType } from './cell.type';
-
 export enum CellPositionEnum {
     CLOSED = 'closed',
     PRESSED = 'pressed',
@@ -13,25 +11,20 @@ export enum GameStatusEnum {
     LOSE = 'lost',
 }
 
-export interface ICellMeta {
-    readonly x: number;
-    readonly y: number;
-    readonly hasMine: boolean;
-    position: CellPositionEnum;
-    value: PossibleNumberType;
-}
+export type BoardCellType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-export interface ICells {
-    [key: string]: ICellMeta;
-}
+export type BoardType = BoardCellType[][];
 
 export interface IState {
     readonly width: number;
     readonly height: number;
     readonly minesNumber: number;
+    readonly minesLeft: number;
     readonly gameStatus: GameStatusEnum;
     readonly lastClick: [number, number] | null;
     readonly isMoveInProgress: boolean;
     readonly isHeadPressed: boolean;
-    readonly cells: ICells;
+    readonly reservedMineCoordinates: [number, number];
+    readonly board: BoardType;
+    readonly cellsPositions: CellPositionEnum[][];
 }

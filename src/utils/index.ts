@@ -1,8 +1,8 @@
 import shuffle from 'lodash/shuffle';
 import take from 'lodash/take';
-import { CellPositionEnum, ICells } from '../interfaces/state.interface';
+import { BoardType, CellPositionEnum } from '../interfaces/state.interface';
 
-interface IGenerateCellsParams {
+interface IGenerateBoardParams {
     readonly width: number;
     readonly height: number;
     readonly minesNumber: number;
@@ -15,53 +15,56 @@ interface IGetNeighborsParams {
     readonly height: number;
 }
 
-export const getCoordinatesByIndex = (index: number, width: number): [number, number] => {
+const getCoordinatesByIndex = (index: number, width: number): [number, number] => {
     const x = index % width;
     const y = Math.floor(index / width);
     return [x, y];
 };
 
-export const generateKeyByCoordinates = ([x, y]: [number, number]) => `${x},${y}`;
-
-export const generateCells = ({ width, height, minesNumber }: IGenerateCellsParams): ICells => {
+export const generateBoard = ({
+    width,
+    height,
+    minesNumber,
+}: IGenerateBoardParams): [BoardType, [number, number]] => {
     const area = width * height;
 
-    const randomNumbers = getNRandomNumbers(area, minesNumber);
-    const mines = new Array(area).fill(null).map((_, index) => randomNumbers.includes(index));
+    const randomNumbers = getNRandomNumbers(area, minesNumber + 1);
+    const [reservedMinePlace, ...minePlaces] = randomNumbers;
+    const mines = new Array(area).fill(null).map((_, index) => minePlaces.includes(index));
 
-    const result = mines.reduce((acc, _, index) => {
-        const [x, y] = getCoordinatesByIndex(index, width);
-        const key = generateKeyByCoordinates([x, y]);
-        acc[key] = {
-            x,
-            y,
-            hasMine: mines[index],
-            position: CellPositionEnum.CLOSED,
-            value: 0,
-        };
-        return acc;
-    }, {} as ICells);
+    const board: BoardType = mines.reduce(
+        (acc, _, index) => {
+            const [x, y] = getCoordinatesByIndex(index, width);
+            acc[x][y] = mines[index] ? 9 : 0;
+            return acc;
+        },
+        new Array(width).fill(null).map(() => new Array(height).fill(0))
+    );
 
-    Object.values(result).forEach(({ x, y, hasMine }) => {
-        if (!hasMine) {
-            return;
-        }
+    board.forEach((column, i) => {
+        column.forEach((_, j) => {
+            if (board[i][j] === 9) {
+                return;
+            }
 
-        const cellsCoordinates: [number, number][] = getNeighbors({ x, y, width, height });
-
-        cellsCoordinates.forEach(([x, y]) => {
-            const key = generateKeyByCoordinates([x, y]);
-            result[key].value += 1;
+            const neighbors = getNeighbors({ x: i, y: j, width, height });
+            neighbors.forEach(([x, y]) => {
+                if (board[x][y] === 9) {
+                    board[i][j] += 1;
+                }
+            });
         });
     });
 
-    return result;
+    const reservedMineCoordinates = getCoordinatesByIndex(reservedMinePlace, width);
+
+    return [board, reservedMineCoordinates];
 };
 
 const getNRandomNumbers = (max: number, n: number): number[] =>
     take(shuffle(new Array(max).fill(null).map((_, index) => index)), n);
 
-const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [number, number][] => {
+export const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [number, number][] => {
     const result = [] as [number, number][];
     if (x > 0) {
         result.push([x - 1, y]);
@@ -100,53 +103,46 @@ const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [number, nu
 
 export const openCell = (
     [x, y]: [number, number],
-    cells: ICells,
-    width: number,
-    height: number,
-    minesNumber: number,
-    isFirstMove: boolean
-): ICells => {
-    const cellKey = generateKeyByCoordinates([x, y]);
-    const currentCell = cells[cellKey];
-
-    if (
-        currentCell.position === CellPositionEnum.OPENED ||
-        currentCell.position === CellPositionEnum.FLAGGED
-    ) {
-        return cells;
-    }
-
-    if (isFirstMove && currentCell.hasMine) {
-        const regeneratedCells = generateCells({ width, height, minesNumber });
-        return openCell([x, y], regeneratedCells, width, height, minesNumber, true);
-    }
-
-    return recursiveOpenCells([x, y], cells, width, height);
-};
-
-const recursiveOpenCells = (
-    [x, y]: [number, number],
-    cells: ICells,
+    board: BoardType,
+    cellsPositions: CellPositionEnum[][],
     width: number,
     height: number
-): ICells => {
-    const cellKey = generateKeyByCoordinates([x, y]);
-    const currentCell = cells[cellKey];
+): CellPositionEnum[][] => {
+    const cellPosition = cellsPositions[x][y];
 
-    if (
-        currentCell.position === CellPositionEnum.OPENED ||
-        currentCell.position === CellPositionEnum.FLAGGED
-    ) {
-        return cells;
+    if (cellPosition === CellPositionEnum.OPENED || cellPosition === CellPositionEnum.FLAGGED) {
+        return cellsPositions;
     }
 
-    cells[cellKey].position = CellPositionEnum.OPENED;
+    const visited = board.map((column) => column.map(() => false));
 
-    if (currentCell.value !== 0 || currentCell.hasMine) {
-        return cells;
+    makeCellsListToOpen(visited, [x, y], board, width, height);
+
+    return cellsPositions.map((column, i) =>
+        column.map((cell, j) => (visited[i][j] ? CellPositionEnum.OPENED : cell))
+    );
+};
+
+const makeCellsListToOpen = (
+    visited: boolean[][],
+    [x, y]: [number, number],
+    board: BoardType,
+    width: number,
+    height: number
+) => {
+    if (visited[x][y]) {
+        return;
+    }
+
+    visited[x][y] = true;
+
+    if (board[x][y] !== 0) {
+        return;
     }
 
     const neighbors = getNeighbors({ x, y, width, height });
 
-    return neighbors.reduce((acc, [x, y]) => recursiveOpenCells([x, y], acc, width, height), cells);
+    neighbors.forEach(([nx, ny]) => {
+        makeCellsListToOpen(visited, [nx, ny], board, width, height);
+    });
 };

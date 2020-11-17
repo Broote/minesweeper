@@ -4,8 +4,12 @@ import styled from 'styled-components';
 import Cell from '../Cell';
 import Head from '../Head';
 import { CellValueType } from '../interfaces/cell.type';
-import { CellPositionEnum, GameStatusEnum, ICellMeta, ICells } from '../interfaces/state.interface';
-import { generateKeyByCoordinates, getCoordinatesByIndex } from '../utils';
+import {
+    BoardCellType,
+    BoardType,
+    CellPositionEnum,
+    GameStatusEnum,
+} from '../interfaces/state.interface';
 
 interface IProps {
     readonly width: number;
@@ -14,7 +18,8 @@ interface IProps {
     readonly gameStatus: GameStatusEnum;
     readonly isMoveInProgress: boolean;
     readonly isHeadPressed: boolean;
-    readonly cells: ICells;
+    readonly cellsPositions: CellPositionEnum[][];
+    readonly board: BoardType;
     readonly onReset: () => void;
     readonly onPressHead: () => void;
     readonly onUnpressHead: () => void;
@@ -68,33 +73,34 @@ const StyledFields = styled.div<IStyledFields>`
     grid-template-rows: ${({ height }) => `repeat(${height}, 16px)`};
 `;
 
-const getValueByMeta = (cellMeta: ICellMeta, lastClick: [number, number] | null): CellValueType => {
-    if (cellMeta.position === CellPositionEnum.CLOSED) {
+const getValueByMeta = (
+    boardValue: BoardCellType,
+    position: CellPositionEnum,
+    isLastClickThisCell: boolean
+): CellValueType => {
+    if (position === CellPositionEnum.CLOSED) {
         return 'closed';
     }
 
-    if (cellMeta.position === CellPositionEnum.FLAGGED) {
+    if (position === CellPositionEnum.FLAGGED) {
         return 'flagged';
     }
 
-    if (cellMeta.position === CellPositionEnum.PRESSED) {
+    if (position === CellPositionEnum.PRESSED) {
         return 'pressed';
     }
 
-    if (lastClick !== null) {
-        const [x, y] = lastClick;
-        const isLastClickThisCell = x === cellMeta.x && y === cellMeta.y;
+    const hasMine = boardValue === 9
 
-        if (cellMeta.hasMine && isLastClickThisCell) {
-            return 'hit';
-        }
-
-        if (cellMeta.hasMine) {
-            return 'mined';
-        }
+    if (hasMine && isLastClickThisCell) {
+        return 'hit';
     }
 
-    return cellMeta.value;
+    if (hasMine) {
+        return 'mined';
+    }
+
+    return boardValue as CellValueType;
 };
 
 const Board: FunctionComponent<IProps> = ({
@@ -104,7 +110,8 @@ const Board: FunctionComponent<IProps> = ({
     isMoveInProgress,
     gameStatus,
     isHeadPressed,
-    cells,
+    cellsPositions,
+    board,
     onReset,
     onPressHead,
     onUnpressHead,
@@ -130,33 +137,34 @@ const Board: FunctionComponent<IProps> = ({
             </StyledTop>
             <StyledFieldsContainer>
                 <StyledFields width={width} height={height}>
-                    {Array(width * height)
-                        .fill(null)
-                        .map((_, index) => {
-                            const [x, y] = getCoordinatesByIndex(index, width);
-                            const key = generateKeyByCoordinates([x, y]);
-                            const cellMeta = cells[key];
-                            return (
-                                <div
-                                    key={key}
-                                    onMouseDown={() => onCellClickStart([x, y])}
-                                    onMouseUp={(e: MouseEvent<HTMLDivElement>) => {
-                                        const isRightClick = e.button === 2;
-                                        if (isRightClick || !isMoveInProgress) {
-                                            return;
-                                        }
-                                        onCellClickFinish([x, y]);
-                                    }}
-                                    onMouseLeave={() => onCellMouseLeave([x, y])}
-                                    onContextMenu={(e: MouseEvent<HTMLDivElement>) => {
-                                        e.preventDefault();
-                                        onCellRightClick([x, y]);
-                                    }}
-                                >
-                                    <Cell value={getValueByMeta(cellMeta, lastClick)} />
-                                </div>
-                            );
-                        })}
+                    {cellsPositions.map((column, x) =>
+                        column.map((_, y) => (
+                            <div
+                                key={[x, y].toString()}
+                                onMouseDown={() => onCellClickStart([x, y])}
+                                onMouseUp={(e: MouseEvent<HTMLDivElement>) => {
+                                    const isRightClick = e.button === 2;
+                                    if (isRightClick || !isMoveInProgress) {
+                                        return;
+                                    }
+                                    onCellClickFinish([x, y]);
+                                }}
+                                onMouseLeave={() => onCellMouseLeave([x, y])}
+                                onContextMenu={(e: MouseEvent<HTMLDivElement>) => {
+                                    e.preventDefault();
+                                    onCellRightClick([x, y]);
+                                }}
+                            >
+                                <Cell
+                                    value={getValueByMeta(
+                                        board[x][y],
+                                        cellsPositions[x][y],
+                                        !!(lastClick && (lastClick[0] === x && lastClick[1] === y))
+                                    )}
+                                />
+                            </div>
+                        ))
+                    )}
                 </StyledFields>
             </StyledFieldsContainer>
         </StyledContainer>

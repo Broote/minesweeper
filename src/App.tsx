@@ -5,22 +5,31 @@ import Board from './Board';
 import Settings from './Settings';
 
 import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from './constants';
-import { IState, GameStatusEnum, CellPositionEnum, ICells } from './interfaces/state.interface';
-import { generateCells, generateKeyByCoordinates, openCell } from './utils';
+import { IState, GameStatusEnum, CellPositionEnum, BoardType } from './interfaces/state.interface';
+import { generateBoard, openCell, getNeighbors } from './utils';
+
+const [initialBoard, reservedMineCoordinates] = generateBoard({
+    width: INITIAL_WIDTH,
+    height: INITIAL_HEIGHT,
+    minesNumber: INITIAL_MINES_NUMBER,
+});
+
+const initialCellsPositions = initialBoard.map((column) =>
+    column.map((_) => CellPositionEnum.CLOSED)
+);
 
 const initialState: IState = {
     width: INITIAL_WIDTH,
     height: INITIAL_HEIGHT,
     minesNumber: INITIAL_MINES_NUMBER,
+    minesLeft: INITIAL_MINES_NUMBER,
     gameStatus: GameStatusEnum.IN_PROGRESS,
     lastClick: null,
     isMoveInProgress: false,
     isHeadPressed: false,
-    cells: generateCells({
-        width: INITIAL_WIDTH,
-        height: INITIAL_HEIGHT,
-        minesNumber: INITIAL_MINES_NUMBER,
-    }),
+    reservedMineCoordinates,
+    board: initialBoard,
+    cellsPositions: initialCellsPositions,
 };
 
 interface IClickStartAction {
@@ -82,24 +91,21 @@ const reducer = (state: IState, action: ActionType) => {
                 return { ...state };
             }
             const [x, y] = action.payload;
-            const cellKey = generateKeyByCoordinates([x, y]);
-            const currentCell = state.cells[cellKey];
+            const cellPosition = state.cellsPositions[x][y];
             if (
-                currentCell.position === CellPositionEnum.OPENED ||
-                currentCell.position === CellPositionEnum.FLAGGED
+                cellPosition === CellPositionEnum.OPENED ||
+                cellPosition === CellPositionEnum.FLAGGED
             ) {
                 return { ...state };
             }
+
+            const cellsPositionsCopy = state.cellsPositions.map((column) => column.slice());
+            cellsPositionsCopy[x][y] = CellPositionEnum.PRESSED;
+
             return {
                 ...state,
                 isMoveInProgress: true,
-                cells: {
-                    ...state.cells,
-                    [cellKey]: {
-                        ...currentCell,
-                        position: CellPositionEnum.PRESSED,
-                    },
-                },
+                cellsPositions: cellsPositionsCopy,
             };
         }
         case 'CLICK_FINISH': {
@@ -108,65 +114,114 @@ const reducer = (state: IState, action: ActionType) => {
                 return { ...state };
             }
             const [x, y] = action.payload;
-            const cellKey = generateKeyByCoordinates([x, y]);
-            const currentCell = state.cells[cellKey];
+            const cellPosition = state.cellsPositions[x][y];
             if (
-                currentCell.position === CellPositionEnum.OPENED ||
-                currentCell.position === CellPositionEnum.FLAGGED
+                cellPosition === CellPositionEnum.OPENED ||
+                cellPosition === CellPositionEnum.FLAGGED
             ) {
                 return { ...state };
             }
 
             const isFirstMove = state.lastClick === null;
+            const isLose = state.board[x][y] === 9;
 
-            const newCells = openCell(
-                [x, y],
-                state.cells,
-                state.width,
-                state.height,
-                state.minesNumber,
-                isFirstMove
-            );
+            if (isFirstMove && isLose) {
+                const { width, height } = state;
+                const boardCopy: BoardType = state.board.map((column) => column.slice());
+                const [i, j] = state.reservedMineCoordinates;
 
-            const isLose = newCells[cellKey].hasMine;
+                boardCopy[i][j] = 9;
+                boardCopy[x][y] = 0;
+
+                const neighborsIJ = getNeighbors({ x: i, y: j, width, height });
+                neighborsIJ.forEach(([ii, jj]) => {
+                    if (boardCopy[ii][jj] !== 9) {
+                        boardCopy[ii][jj] += 1;
+                    }
+                });
+
+                const neighborsXY = getNeighbors({ x, y, width, height });
+                neighborsXY.forEach(([xx, yy]) => {
+                    if (boardCopy[xx][yy] === 9) {
+                        boardCopy[x][y] += 1;
+                    } else {
+                        boardCopy[xx][yy] -= 1;
+                    }
+                });
+
+                const newCellsPositions = openCell(
+                    [x, y],
+                    boardCopy,
+                    state.cellsPositions,
+                    state.width,
+                    state.height
+                );
+
+                return {
+                    ...state,
+                    board: boardCopy,
+                    isMoveInProgress: false,
+                    lastClick: action.payload,
+                    cellsPositions: newCellsPositions,
+                };
+            }
 
             if (isLose) {
+                const mines: string[] = [];
+                state.board.forEach((column, i) => {
+                    column.forEach((cell, j) => {
+                        if (cell === 9) {
+                            mines.push([i, j].toString());
+                        }
+                    });
+                });
+
+                const newCellsPositions = state.cellsPositions.map((column, i) =>
+                    column.map((cell, j) =>
+                        mines.includes([i, j].toString()) && cell !== CellPositionEnum.FLAGGED
+                            ? CellPositionEnum.OPENED
+                            : cell
+                    )
+                );
+
                 return {
                     ...state,
                     isMoveInProgress: false,
                     lastClick: action.payload,
                     gameStatus: GameStatusEnum.LOSE,
-                    cells: Object.entries(newCells).reduce((acc, [key, cellMeta]) => {
-                        acc[key] = {
-                            ...cellMeta,
-                            position: cellMeta.hasMine
-                                ? CellPositionEnum.OPENED
-                                : cellMeta.position,
-                        };
-                        return acc;
-                    }, {} as ICells),
+                    cellsPositions: newCellsPositions,
                 };
             }
 
-            const isWin = Object.values(newCells).every(
-                ({ hasMine, position }) => hasMine || position === CellPositionEnum.OPENED
+            const newCellsPositions = openCell(
+                [x, y],
+                state.board,
+                state.cellsPositions,
+                state.width,
+                state.height
+            );
+
+            const isWin = newCellsPositions.every((column, i) =>
+                column.every(
+                    (cell, j) =>
+                        [CellPositionEnum.OPENED, CellPositionEnum.FLAGGED].includes(cell) ||
+                        state.board[i][j] === 9
+                )
             );
 
             if (isWin) {
+                const winCellsPositions = newCellsPositions.map((column, i) =>
+                    column.map((cell, j) =>
+                        state.board[i][j] === 9 ? CellPositionEnum.FLAGGED : cell
+                    )
+                );
+
                 return {
                     ...state,
                     isMoveInProgress: false,
                     lastClick: action.payload,
                     gameStatus: GameStatusEnum.WIN,
-                    cells: Object.entries(newCells).reduce((acc, [key, cellMeta]) => {
-                        acc[key] = {
-                            ...cellMeta,
-                            position: cellMeta.hasMine
-                                ? CellPositionEnum.FLAGGED
-                                : cellMeta.position,
-                        };
-                        return acc;
-                    }, {} as ICells),
+                    cellsPositions: winCellsPositions,
                 };
             }
 
@@ -174,7 +229,7 @@ const reducer = (state: IState, action: ActionType) => {
                 ...state,
                 isMoveInProgress: false,
                 lastClick: action.payload,
-                cells: newCells,
+                cellsPositions: newCellsPositions,
             };
         }
         case 'MOUSE_LEAVE': {
@@ -183,21 +238,18 @@ const reducer = (state: IState, action: ActionType) => {
                 return { ...state };
             }
             const [x, y] = action.payload;
-            const cellKey = generateKeyByCoordinates([x, y]);
-            const currentCell = state.cells[cellKey];
-            if (currentCell.position !== CellPositionEnum.PRESSED) {
+            const cellPosition = state.cellsPositions[x][y];
+            if (cellPosition !== CellPositionEnum.PRESSED) {
                 return { ...state };
             }
+
+            const cellsPositionsCopy = state.cellsPositions.map((column) => column.slice());
+            cellsPositionsCopy[x][y] = CellPositionEnum.CLOSED;
+
             return {
                 ...state,
                 isMoveInProgress: false,
-                cells: {
-                    ...state.cells,
-                    [cellKey]: {
-                        ...currentCell,
-                        position: CellPositionEnum.CLOSED,
-                    },
-                },
+                cellsPositions: cellsPositionsCopy,
             };
         }
         case 'RIGHT_CLICK': {
@@ -206,24 +258,27 @@ const reducer = (state: IState, action: ActionType) => {
                 return { ...state };
             }
             const [x, y] = action.payload;
-            const cellKey = generateKeyByCoordinates([x, y]);
-            const currentCell = state.cells[cellKey];
-            if (currentCell.position === CellPositionEnum.OPENED) {
+            const cellPosition = state.cellsPositions[x][y];
+            if (cellPosition === CellPositionEnum.OPENED) {
                 return { ...state };
             }
+
+            const isCurrentFlagged = cellPosition === CellPositionEnum.FLAGGED;
+
+            if (!isCurrentFlagged && state.minesLeft === 0) {
+                return { ...state };
+            }
+
+            const cellsPositionsCopy = state.cellsPositions.map((column) => column.slice());
+            cellsPositionsCopy[x][y] = isCurrentFlagged
+                ? CellPositionEnum.CLOSED
+                : CellPositionEnum.FLAGGED;
+
             return {
                 ...state,
                 lastClick: action.payload,
-                cells: {
-                    ...state.cells,
-                    [cellKey]: {
-                        ...currentCell,
-                        position:
-                            currentCell.position === CellPositionEnum.FLAGGED
-                                ? CellPositionEnum.CLOSED
-                                : CellPositionEnum.FLAGGED,
-                    },
-                },
+                minesNumber: isCurrentFlagged ? state.minesLeft - 1 : state.minesLeft + 1,
+                cellsPositions: cellsPositionsCopy,
             };
         }
         case 'START_GAME': {
@@ -232,34 +287,48 @@ const reducer = (state: IState, action: ActionType) => {
                 height: newHeight,
                 minesNumber: newMinesNumber,
             } = action.payload;
-            return {
-                ...state,
+
+            const [newBoard, reservedMineCoordinates] = generateBoard({
                 width: newWidth,
                 height: newHeight,
                 minesNumber: newMinesNumber,
+            });
+
+            return {
+                width: newWidth,
+                height: newHeight,
+                minesNumber: newMinesNumber,
+                minesLeft: newMinesNumber,
                 gameStatus: GameStatusEnum.IN_PROGRESS,
                 lastClick: null,
                 isMoveInProgress: false,
                 isHeadPressed: false,
-                cells: generateCells({
-                    width: newWidth,
-                    height: newHeight,
-                    minesNumber: newMinesNumber,
-                }),
+                reservedMineCoordinates,
+                board: newBoard,
+                cellsPositions: newBoard.map((column) =>
+                    column.map((_) => CellPositionEnum.CLOSED)
+                ),
             };
         }
         case 'RESET': {
+            const [newBoard, reservedMineCoordinates] = generateBoard({
+                width: state.width,
+                height: state.height,
+                minesNumber: state.minesNumber,
+            });
+
             return {
                 ...state,
+                minesLeft: state.minesNumber,
                 gameStatus: GameStatusEnum.IN_PROGRESS,
                 lastClick: null,
                 isMoveInProgress: false,
                 isHeadPressed: false,
-                cells: generateCells({
-                    width: state.width,
-                    height: state.height,
-                    minesNumber: state.minesNumber,
-                }),
+                reservedMineCoordinates,
+                board: newBoard,
+                cellsPositions: newBoard.map((column) =>
+                    column.map((_) => CellPositionEnum.CLOSED)
+                ),
             };
         }
         case 'PRESS_HEAD': {
@@ -307,7 +376,8 @@ function App() {
                     gameStatus={state.gameStatus}
                     isMoveInProgress={state.isMoveInProgress}
                     isHeadPressed={state.isHeadPressed}
-                    cells={state.cells}
+                    cellsPositions={state.cellsPositions}
+                    board={state.board}
                     onReset={() => {
                         dispatch({ type: 'RESET' });
                     }}
