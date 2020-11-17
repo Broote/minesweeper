@@ -118,7 +118,11 @@ export const openCell = (
 
     const visited = board.map((column) => column.map(() => false));
 
-    makeCellsListToOpen(visited, [x, y], board, width, height);
+    const cellsToExplore = [[x, y]] as [number, number][];
+
+    while (cellsToExplore.length > 0) {
+        makeCellsListToOpen(cellsToExplore, visited, board, width, height);
+    }
 
     return cellsPositions.map((column, i) =>
         column.map((cell, j) => (visited[i][j] ? CellPositionEnum.OPENED : cell))
@@ -126,12 +130,14 @@ export const openCell = (
 };
 
 const makeCellsListToOpen = (
+    acc: [number, number][],
     visited: boolean[][],
-    [x, y]: [number, number],
     board: BoardType,
     width: number,
     height: number
 ) => {
+    const [x, y] = acc.pop() as [number, number];
+
     if (visited[x][y]) {
         return;
     }
@@ -144,14 +150,11 @@ const makeCellsListToOpen = (
 
     const neighbors = getNeighbors({ x, y, width, height });
 
-    neighbors.forEach(([nx, ny]) => {
-        makeCellsListToOpen(visited, [nx, ny], board, width, height);
-    });
+    acc.push(...neighbors);
 };
 
 // 1    => 001
 // 12   => 012
 // 123  => 123
 // 1234 => 234
-export const prependTwoZeros = (index: number | string): string =>
-    `00${index}`.slice(-3);
+export const prependTwoZeros = (index: number | string): string => `00${index}`.slice(-3);

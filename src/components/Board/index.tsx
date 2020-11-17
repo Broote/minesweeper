@@ -75,6 +75,7 @@ const StyledFieldsContainer = styled.div`
 
 const StyledFields = styled.div<IStyledFields>`
     display: inline-grid;
+    grid-auto-flow: column;
     grid-template-columns: ${({ width }) => `repeat(${width}, 16px)`};
     grid-template-rows: ${({ height }) => `repeat(${height}, 16px)`};
 `;
