@@ -17,12 +17,6 @@ interface IGetNeighborsParams {
     readonly height: number;
 }
 
-const getCoordinatesByIndex = (index: number, width: number): [number, number] => {
-    const x = index % width;
-    const y = Math.floor(index / width);
-    return [x, y];
-};
-
 export const generateBoard = ({
     width,
     height,
@@ -62,9 +56,6 @@ export const generateBoard = ({
 
     return [board, reservedMineCoordinates];
 };
-
-const getNRandomNumbers = (max: number, n: number): number[] =>
-    take(shuffle(new Array(max).fill(null).map((_, index) => index)), n);
 
 export const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [number, number][] => {
     const result = [] as [number, number][];
@@ -151,6 +142,15 @@ const makeCellsListToOpen = (
     const neighbors = getNeighbors({ x, y, width, height });
 
     acc.push(...neighbors);
+};
+
+const getNRandomNumbers = (max: number, n: number): number[] =>
+    take(shuffle(new Array(max).fill(null).map((_, index) => index)), n);
+
+const getCoordinatesByIndex = (index: number, width: number): [number, number] => {
+    const x = index % width;
+    const y = Math.floor(index / width);
+    return [x, y];
 };
 
 // 1    => 001
