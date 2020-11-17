@@ -1,5 +1,7 @@
 import shuffle from 'lodash/shuffle';
 import take from 'lodash/take';
+
+import { MINE_VALUE } from '../constants';
 import { BoardType, CellPositionEnum } from '../interfaces/state.interface';
 
 interface IGenerateBoardParams {
@@ -35,7 +37,7 @@ export const generateBoard = ({
     const board: BoardType = mines.reduce(
         (acc, _, index) => {
             const [x, y] = getCoordinatesByIndex(index, width);
-            acc[x][y] = mines[index] ? 9 : 0;
+            acc[x][y] = mines[index] ? MINE_VALUE : 0;
             return acc;
         },
         new Array(width).fill(null).map(() => new Array(height).fill(0))
@@ -43,13 +45,13 @@ export const generateBoard = ({
 
     board.forEach((column, i) => {
         column.forEach((_, j) => {
-            if (board[i][j] === 9) {
+            if (board[i][j] === MINE_VALUE) {
                 return;
             }
 
             const neighbors = getNeighbors({ x: i, y: j, width, height });
             neighbors.forEach(([x, y]) => {
-                if (board[x][y] === 9) {
+                if (board[x][y] === MINE_VALUE) {
                     board[i][j] += 1;
                 }
             });

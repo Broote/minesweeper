@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
-import { CellValueType } from '../interfaces/cell.type';
-import sprite from '../assets/sprite100.gif';
+import { CellValueType } from '../../interfaces/cell.type';
+import sprite from '../../assets/sprite100.gif';
 
 interface IProps {
     readonly value: CellValueType;

@@ -1,8 +1,8 @@
 import React, { FunctionComponent } from 'react';
 import styled from 'styled-components';
 
-import sprite from '../assets/sprite100.gif';
-import { GameStatusEnum } from '../interfaces/state.interface';
+import sprite from '../../assets/sprite100.gif';
+import { GameStatusEnum } from '../../interfaces/state.interface';
 
 interface IProps {
     readonly gameStatus: GameStatusEnum;

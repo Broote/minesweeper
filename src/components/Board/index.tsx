@@ -3,13 +3,16 @@ import styled from 'styled-components';
 
 import Cell from '../Cell';
 import Head from '../Head';
-import { CellValueType } from '../interfaces/cell.type';
+
+import { CellValueType } from '../../interfaces/cell.type';
 import {
     BoardCellType,
     BoardType,
     CellPositionEnum,
     GameStatusEnum,
-} from '../interfaces/state.interface';
+} from '../../interfaces/state.interface';
+
+import { MINE_VALUE } from '../../constants';
 
 interface IProps {
     readonly width: number;
@@ -90,7 +93,7 @@ const getValueByMeta = (
         return 'pressed';
     }
 
-    const hasMine = boardValue === 9
+    const hasMine = boardValue === MINE_VALUE;
 
     if (hasMine && isLastClickThisCell) {
         return 'hit';
@@ -159,7 +162,7 @@ const Board: FunctionComponent<IProps> = ({
                                     value={getValueByMeta(
                                         board[x][y],
                                         cellsPositions[x][y],
-                                        !!(lastClick && (lastClick[0] === x && lastClick[1] === y))
+                                        !!(lastClick && lastClick[0] === x && lastClick[1] === y)
                                     )}
                                 />
                             </div>

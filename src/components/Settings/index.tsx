@@ -1,7 +1,7 @@
 import { Button, TextField } from '@material-ui/core';
 import React, { FunctionComponent, useState } from 'react';
 import styled from 'styled-components';
-import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from '../constants';
+import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from '../../constants';
 
 interface IOnStartParams {
     readonly width: number;
