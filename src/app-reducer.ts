@@ -188,6 +188,7 @@ export const reducer = (state: IState, action: ActionType) => {
 
                 return {
                     ...state,
+                    minesLeft: 0,
                     isMoveInProgress: false,
                     lastClick: action.payload,
                     gameStatus: GameStatusEnum.WIN,
@@ -246,8 +247,9 @@ export const reducer = (state: IState, action: ActionType) => {
 
             return {
                 ...state,
+                isMoveInProgress: false,
                 lastClick: action.payload,
-                minesNumber: isCurrentFlagged ? state.minesLeft - 1 : state.minesLeft + 1,
+                minesLeft: isCurrentFlagged ? state.minesLeft + 1 : state.minesLeft - 1,
                 cellsPositions: cellsPositionsCopy,
             };
         }

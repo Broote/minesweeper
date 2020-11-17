@@ -63,6 +63,7 @@ function App() {
                 <Board
                     width={state.width}
                     height={state.height}
+                    minesLeft={state.minesLeft}
                     lastClick={state.lastClick}
                     gameStatus={state.gameStatus}
                     isMoveInProgress={state.isMoveInProgress}

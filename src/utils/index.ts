@@ -148,3 +148,10 @@ const makeCellsListToOpen = (
         makeCellsListToOpen(visited, [nx, ny], board, width, height);
     });
 };
+
+// 1    => 001
+// 12   => 012
+// 123  => 123
+// 1234 => 234
+export const prependTwoZeros = (index: number | string): string =>
+    `00${index}`.slice(-3);

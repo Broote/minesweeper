@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import Cell from '../Cell';
 import Head from '../Head';
+import MinesCounter from '../MinesCounter';
 
 import { CellValueType } from '../../interfaces/cell.type';
 import {
@@ -17,6 +18,7 @@ import { MINE_VALUE } from '../../constants';
 interface IProps {
     readonly width: number;
     readonly height: number;
+    readonly minesLeft: number;
     readonly lastClick: [number, number] | null;
     readonly gameStatus: GameStatusEnum;
     readonly isMoveInProgress: boolean;
@@ -51,9 +53,10 @@ const StyledTop = styled.div`
     display: flex;
     height: 32px;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     background-color: #c0c0c0;
     margin-bottom: 6px;
+    padding: 4px 6px;
     border-top: 2px solid #7b7b7b;
     border-left: 2px solid #7b7b7b;
     border-right: 2px solid #ffffff;
@@ -109,6 +112,7 @@ const getValueByMeta = (
 const Board: FunctionComponent<IProps> = ({
     width,
     height,
+    minesLeft,
     lastClick,
     isMoveInProgress,
     gameStatus,
@@ -126,6 +130,7 @@ const Board: FunctionComponent<IProps> = ({
     return (
         <StyledContainer>
             <StyledTop>
+                <MinesCounter minesLeft={minesLeft} />
                 <StyledHeadContainer
                     onMouseDown={onPressHead}
                     onMouseUp={onReset}
@@ -137,6 +142,7 @@ const Board: FunctionComponent<IProps> = ({
                         isHeadPressed={isHeadPressed}
                     />
                 </StyledHeadContainer>
+                <div />
             </StyledTop>
             <StyledFieldsContainer>
                 <StyledFields width={width} height={height}>
