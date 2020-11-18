@@ -17,6 +17,28 @@ interface IGetNeighborsParams {
     readonly height: number;
 }
 
+interface IOpenCellParams {
+    readonly coordinates: [number, number];
+    readonly board: BoardType;
+    readonly cellsPositions: CellPositionEnum[][];
+    readonly width: number;
+    readonly height: number;
+}
+
+interface IMakeCellsListToOpenParams {
+    readonly acc: [number, number][];
+    readonly visited: boolean[][];
+    readonly board: BoardType;
+    readonly width: number;
+    readonly height: number;
+}
+
+// 1    => 001
+// 12   => 012
+// 123  => 123
+// 1234 => 234
+export const prependTwoZeros = (index: number | string): string => `00${index}`.slice(-3);
+
 export const generateBoard = ({
     width,
     height,
@@ -94,13 +116,13 @@ export const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [num
     return result;
 };
 
-export const openCell = (
-    [x, y]: [number, number],
-    board: BoardType,
-    cellsPositions: CellPositionEnum[][],
-    width: number,
-    height: number
-): CellPositionEnum[][] => {
+export const openCell = ({
+    coordinates: [x, y],
+    board,
+    cellsPositions,
+    width,
+    height,
+}: IOpenCellParams): CellPositionEnum[][] => {
     const cellPosition = cellsPositions[x][y];
 
     if (cellPosition === CellPositionEnum.OPENED || cellPosition === CellPositionEnum.FLAGGED) {
@@ -112,7 +134,7 @@ export const openCell = (
     const cellsToExplore = [[x, y]] as [number, number][];
 
     while (cellsToExplore.length > 0) {
-        makeCellsListToOpen(cellsToExplore, visited, board, width, height);
+        makeCellsListToOpen({ acc: cellsToExplore, visited, board, width, height });
     }
 
     return cellsPositions.map((column, i) =>
@@ -120,13 +142,13 @@ export const openCell = (
     );
 };
 
-const makeCellsListToOpen = (
-    acc: [number, number][],
-    visited: boolean[][],
-    board: BoardType,
-    width: number,
-    height: number
-) => {
+const makeCellsListToOpen = ({
+    acc,
+    visited,
+    board,
+    width,
+    height,
+}: IMakeCellsListToOpenParams) => {
     const [x, y] = acc.pop() as [number, number];
 
     if (visited[x][y]) {
@@ -154,9 +176,3 @@ const getCoordinatesByIndex = (index: number, width: number): [number, number] =
     const y = Math.floor(index / width);
     return [x, y];
 };
-
-// 1    => 001
-// 12   => 012
-// 123  => 123
-// 1234 => 234
-export const prependTwoZeros = (index: number | string): string => `00${index}`.slice(-3);

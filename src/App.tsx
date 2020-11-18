@@ -5,7 +5,7 @@ import { INITIAL_HEIGHT, INITIAL_WIDTH, INITIAL_MINES_NUMBER } from './constants
 import { IState, GameStatusEnum, CellPositionEnum } from './interfaces/state.interface';
 import { generateBoard } from './utils';
 
-import { reducer } from './app-reducer';
+import { reducer } from './reducers/app-reducer';
 
 import Board from './components/Board';
 import Settings from './components/Settings';

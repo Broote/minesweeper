@@ -1,6 +1,6 @@
-import { MINE_VALUE } from './constants';
-import { IState, GameStatusEnum, CellPositionEnum, BoardType } from './interfaces/state.interface';
-import { generateBoard, openCell, getNeighbors } from './utils';
+import { MINE_VALUE } from '../constants';
+import { IState, GameStatusEnum, CellPositionEnum, BoardType } from '../interfaces/state.interface';
+import { generateBoard, openCell, getNeighbors } from '../utils';
 
 interface IClickStartAction {
     readonly type: 'CLICK_START';
@@ -53,7 +53,8 @@ type ActionType =
     | IResetAction
     | IStartGameAction;
 
-export const reducer = (state: IState, action: ActionType) => {
+export const reducer = (state: IState, action: ActionType): IState => {
+    console.log(state, action);
     switch (action.type) {
         case 'CLICK_START': {
             const isFinished = [GameStatusEnum.WIN, GameStatusEnum.LOSE].includes(state.gameStatus);
@@ -121,13 +122,13 @@ export const reducer = (state: IState, action: ActionType) => {
                     }
                 });
 
-                const newCellsPositions = openCell(
-                    [x, y],
-                    boardCopy,
-                    state.cellsPositions,
-                    state.width,
-                    state.height
-                );
+                const newCellsPositions = openCell({
+                    coordinates: [x, y],
+                    board: boardCopy,
+                    cellsPositions: state.cellsPositions,
+                    width: state.width,
+                    height: state.height,
+                });
 
                 return {
                     ...state,
@@ -167,13 +168,13 @@ export const reducer = (state: IState, action: ActionType) => {
                 };
             }
 
-            const newCellsPositions = openCell(
-                [x, y],
-                state.board,
-                state.cellsPositions,
-                state.width,
-                state.height
-            );
+            const newCellsPositions = openCell({
+                coordinates: [x, y],
+                board: state.board,
+                cellsPositions: state.cellsPositions,
+                width: state.width,
+                height: state.height,
+            });
 
             const isWin = newCellsPositions.every((column, i) =>
                 column.every(
