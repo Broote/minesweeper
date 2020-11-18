@@ -54,7 +54,6 @@ type ActionType =
     | IStartGameAction;
 
 export const reducer = (state: IState, action: ActionType): IState => {
-    console.log(state, action);
     switch (action.type) {
         case 'CLICK_START': {
             const isFinished = [GameStatusEnum.WIN, GameStatusEnum.LOSE].includes(state.gameStatus);
