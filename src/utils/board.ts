@@ -1,6 +1,6 @@
 import { MINE_VALUE } from '../constants';
 import { BoardType } from '../interfaces/state.interface';
-import { getCoordinatesByIndex, getNRandomNumbers } from './general';
+import { getNRandomNumbers } from './general';
 
 interface IGenerateBoardParams {
     readonly width: number;
@@ -22,7 +22,7 @@ export const generateBoard = ({
 }: IGenerateBoardParams): [BoardType, [number, number]] => {
     const area = width * height;
 
-    const randomNumbers = getNRandomNumbers(area, minesNumber + 1);
+    const randomNumbers = getNRandomNumbers({ n: minesNumber + 1, max: area });
     const [reservedMinePlace, ...minePlaces] = randomNumbers;
     const mines = new Array(area).fill(null).map((_, index) => minePlaces.includes(index));
 
@@ -90,4 +90,10 @@ export const getNeighbors = ({ x, y, width, height }: IGetNeighborsParams): [num
     }
 
     return result;
+};
+
+const getCoordinatesByIndex = (index: number, width: number): [number, number] => {
+    const x = index % width;
+    const y = Math.floor(index / width);
+    return [x, y];
 };
