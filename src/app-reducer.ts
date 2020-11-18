@@ -102,7 +102,6 @@ export const reducer = (state: IState, action: ActionType) => {
                 const [i, j] = state.reservedMineCoordinates;
 
                 boardCopy[i][j] = MINE_VALUE;
-                boardCopy[x][y] = 0;
 
                 const neighborsIJ = getNeighbors({ x: i, y: j, width, height });
                 neighborsIJ.forEach(([ii, jj]) => {
@@ -110,6 +109,8 @@ export const reducer = (state: IState, action: ActionType) => {
                         boardCopy[ii][jj] += 1;
                     }
                 });
+
+                boardCopy[x][y] = 0;
 
                 const neighborsXY = getNeighbors({ x, y, width, height });
                 neighborsXY.forEach(([xx, yy]) => {
