@@ -85,6 +85,7 @@ const calcCellValue = ({
 
 const StyledContainer = styled.div`
     display: inline-block;
+    text-align: center;
     background-color: #bdbdbd;
     padding: 6px;
     border-top: 2px solid #ffffff;
