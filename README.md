@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# Getting Started with Minesweeper
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Demo is here: https://broote-minesweeper.surge.sh/
 
 ## Available Scripts
 
