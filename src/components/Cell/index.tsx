@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, memo } from 'react';
 import styled from 'styled-components';
 import { CellValueType } from '../../interfaces/cell.type';
 import sprite from '../../assets/sprite100.gif';
@@ -103,4 +103,4 @@ const Cell: FunctionComponent<IProps> = ({ value }) => {
     );
 };
 
-export default Cell;
+export default memo(Cell);

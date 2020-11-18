@@ -75,7 +75,7 @@ const getMinesNumber = (input: number, width: number, height: number): number =>
 const Settings: FunctionComponent<IProps> = ({ onStart }) => {
     const [width, setWidth] = useState(INITIAL_WIDTH);
     const [height, setHeight] = useState(INITIAL_HEIGHT);
-    const [minesNumber, setMinesNumner] = useState(INITIAL_MINES_NUMBER);
+    const [minesNumber, setMinesNumber] = useState(INITIAL_MINES_NUMBER);
 
     return (
         <StyledContainer>
@@ -107,7 +107,7 @@ const Settings: FunctionComponent<IProps> = ({ onStart }) => {
                     size='small'
                     value={minesNumber}
                     onChange={(e) => {
-                        setMinesNumner(Number(e.target.value));
+                        setMinesNumber(Number(e.target.value));
                     }}
                 />
                 <Button
@@ -124,7 +124,7 @@ const Settings: FunctionComponent<IProps> = ({ onStart }) => {
 
                         setWidth(checkedWidth);
                         setHeight(checkedHeight);
-                        setMinesNumner(checkedMinesNumber);
+                        setMinesNumber(checkedMinesNumber);
 
                         onStart({
                             width: checkedWidth,
