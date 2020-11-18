@@ -38,7 +38,7 @@ const initialState: IState = {
     height: INITIAL_HEIGHT,
     minesNumber: INITIAL_MINES_NUMBER,
     minesLeft: INITIAL_MINES_NUMBER,
-    gameStatus: GameStatusEnum.IN_PROGRESS,
+    gameStatus: GameStatusEnum.NOT_STARTED,
     lastClick: null,
     isMoveInProgress: false,
     isHeadPressed: false,
