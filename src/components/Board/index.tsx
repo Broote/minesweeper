@@ -41,6 +41,48 @@ interface IStyledFields {
     readonly height: number;
 }
 
+interface ICalcValueParams {
+    readonly boardCellValue: BoardCellType;
+    readonly position: CellPositionEnum;
+    readonly isLastClickThisCell: boolean;
+    readonly isGameFinished: boolean;
+}
+
+const calcCellValue = ({
+    boardCellValue,
+    position,
+    isLastClickThisCell,
+    isGameFinished,
+}: ICalcValueParams): CellValueType => {
+    if (position === CellPositionEnum.CLOSED) {
+        return 'closed';
+    }
+
+    if (position === CellPositionEnum.PRESSED) {
+        return 'pressed';
+    }
+
+    const hasMine = boardCellValue === MINE_VALUE;
+
+    if (isGameFinished && position === CellPositionEnum.FLAGGED && !hasMine) {
+        return 'not-mined';
+    }
+
+    if (position === CellPositionEnum.FLAGGED) {
+        return 'flagged';
+    }
+
+    if (hasMine && isLastClickThisCell) {
+        return 'hit';
+    }
+
+    if (hasMine) {
+        return 'mined';
+    }
+
+    return boardCellValue as CellValueType;
+};
+
 const StyledContainer = styled.div`
     display: inline-block;
     background-color: #bdbdbd;
@@ -82,36 +124,6 @@ const StyledFields = styled.div<IStyledFields>`
     grid-template-rows: ${({ height }) => `repeat(${height}, 16px)`};
 `;
 
-const getValueByMeta = (
-    boardValue: BoardCellType,
-    position: CellPositionEnum,
-    isLastClickThisCell: boolean
-): CellValueType => {
-    if (position === CellPositionEnum.CLOSED) {
-        return 'closed';
-    }
-
-    if (position === CellPositionEnum.FLAGGED) {
-        return 'flagged';
-    }
-
-    if (position === CellPositionEnum.PRESSED) {
-        return 'pressed';
-    }
-
-    const hasMine = boardValue === MINE_VALUE;
-
-    if (hasMine && isLastClickThisCell) {
-        return 'hit';
-    }
-
-    if (hasMine) {
-        return 'mined';
-    }
-
-    return boardValue as CellValueType;
-};
-
 const Board: FunctionComponent<IProps> = ({
     width,
     height,
@@ -131,6 +143,8 @@ const Board: FunctionComponent<IProps> = ({
     onCellMouseLeave,
     onCellRightClick,
 }) => {
+    const isGameFinished = [GameStatusEnum.LOSE, GameStatusEnum.WIN].includes(gameStatus);
+
     return (
         <StyledContainer>
             <StyledTop>
@@ -169,11 +183,16 @@ const Board: FunctionComponent<IProps> = ({
                                 }}
                             >
                                 <Cell
-                                    value={getValueByMeta(
-                                        board[x][y],
-                                        cellsPositions[x][y],
-                                        !!(lastClick && lastClick[0] === x && lastClick[1] === y)
-                                    )}
+                                    value={calcCellValue({
+                                        boardCellValue: board[x][y],
+                                        position: cellsPositions[x][y],
+                                        isLastClickThisCell: !!(
+                                            lastClick &&
+                                            lastClick[0] === x &&
+                                            lastClick[1] === y
+                                        ),
+                                        isGameFinished,
+                                    })}
                                 />
                             </div>
                         ))

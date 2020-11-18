@@ -37,6 +37,10 @@ const StyledHitCell = styled(StyledCell)`
     background-position: -32px -39px;
 `;
 
+const StyledNotMineCell = styled(StyledCell)`
+    background-position: -48px -39px;
+`;
+
 const StyledMineCell = styled(StyledCell)`
     background-position: -64px -39px;
 `;
@@ -84,6 +88,7 @@ const Cell: FunctionComponent<IProps> = ({ value }) => {
             {value === 'pressed' && <StyledEmptyCell />}
             {value === 'flagged' && <StyledFlaggedCell />}
             {value === 'hit' && <StyledHitCell />}
+            {value === 'not-mined' && <StyledNotMineCell />}
             {value === 'mined' && <StyledMineCell />}
             {value === 0 && <StyledEmptyCell />}
             {value === 1 && <StyledOneCell />}
